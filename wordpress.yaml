@@ -1,17 +1,72 @@
 ---
-- name: Installs packages
+- name: Installs wordpress
   become: yes
   become_method: sudo
   user: centos
   hosts: all
   tasks: 
-  - name: Install wordpress
+  - name: download wordpress
     get_url:
-      url:
+      url: https://wordpress.org/latest.tar.gz
+      dest: /var/www/html/
 
+  - name: extract wordpress
     unarchive: 
-    
-    loop to install packages:
-    httpd
-    telnet
-    mysql
+      src: /var/www/html/wordpress-5.4.2.tar.gz
+      dest: /var/www/html/
+      remote_src: yes
+  
+  - name: Install packages
+    package:
+      name: "{{item}}"
+      state: latest
+    with_items:
+    - httpd
+    - epel-release
+    - wget
+    - unzip
+    - mariadb-server
+    - php-mysql
+    ignore_errors: true
+
+  - name: copy file with owner
+    copy: 
+      src: wordpress/
+      dest: /var/www/html/
+      owner: apache
+      group: apache
+      remote_src: yes
+
+  - name: restart httpd
+    service:
+      name: httpd
+      state: started
+      enabled: true
+
+  - name: Disable SELinux
+    selinux:
+      state: disabled
+
+  - name: Starting mariadb
+    service: 
+      name: mariadb
+      state: started
+      enabled: yes
+
+  - name: Creating a user
+    mysql_user:
+      user: admin
+      password: mysecure
+      priv: '*.*:All,GRANT'
+      state: present
+
+  - name: creating wordpress
+    mysql_db: 
+      name: wordpress
+      state: present
+  - name: install epel
+    shell: "sudo yum install http //rpms.remirepo.net/enterprise/remi-release-7.rpm"
+  - name: config manager enabled
+    shell: "sudo yum-config-manager --enabled remi-php73"
+  - name: install php
+    shell: "sudo yum install php php-mysql -y"
