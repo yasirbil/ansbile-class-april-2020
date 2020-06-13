@@ -1,15 +1,17 @@
 ---
-- name: User Playbook
+- name: Installs packages
   become: yes
   become_method: sudo
   user: centos
   hosts: all
   tasks: 
-  - name: Add Users
-    user:        
+  - name: Install telnet
+    package:
       name: "{{item}}"
       state: present
     with_items:
-    - bob
-    - lisa
-    - sam
+    - telnet
+    - gzip
+    - lftp
+    - httpd
+    - vsftpd
